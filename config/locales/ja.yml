@@ -1,0 +1,5 @@
+ja:
+  label_gantt_editor: ガントチャートエディタ
+  permission_edit_gantt_dates: ガントチャートの日付を編集
+  error_update_dates: 日付の更新に失敗しました
+  success_update_dates: 日付を更新しました 

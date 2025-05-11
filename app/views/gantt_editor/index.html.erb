@@ -1,0 +1,47 @@
+<% content_for :header_tags do %>
+  <%= javascript_include_tag 'gantt_editor', plugin: 'redmine_gantt_editor' %>
+  <%= stylesheet_link_tag 'gantt_editor', plugin: 'redmine_gantt_editor' %>
+<% end %>
+
+<div class="gantt-editor-container">
+  <h2><%= l(:label_gantt_editor) %></h2>
+  
+  <% if @issues.any? %>
+    <div id="gantt-editor" class="gantt-editor-chart">
+      <!-- タスクはJavaScriptで動的に追加されます -->
+    </div>
+
+    <script type="text/javascript">
+      $(document).ready(function() {
+        var tasks = <%= raw @issues.to_json(
+          only: [:id, :subject, :start_date, :due_date, :done_ratio],
+          include: {  
+            status: { only: [:name] },
+            tracker: { only: [:name] }
+          }
+        ) %>;
+        
+        console.log('Loaded tasks:', tasks); // デバッグ用
+        
+        $('#gantt-editor').ganttEditor({
+          projectId: <%= @project.id %>,
+          tasks: tasks.map(function(task) {
+            return {
+              id: task.id,
+              subject: task.subject,
+              start_date: task.start_date,
+              due_date: task.due_date,
+              status_name: task.status ? task.status.name : '',
+              tracker_name: task.tracker ? task.tracker.name : '',
+              done_ratio: task.done_ratio
+            };
+          })
+        });
+      });
+    </script>
+  <% else %>
+    <div class="nodata">
+      <%= l(:label_no_data) %>
+    </div>
+  <% end %>
+</div> 

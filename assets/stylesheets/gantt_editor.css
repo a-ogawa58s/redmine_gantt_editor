@@ -1,0 +1,170 @@
+.gantt-editor-container {
+  margin: 5px;
+}
+
+.gantt-editor-chart {
+  position: relative;
+  height: 500px;
+  border: 1px solid #ccc;
+  overflow-x: auto;
+  background: #f9f9f9;
+  padding: 20px;
+  padding-top: 80px; /* 日付目盛りの高さを考慮して調整 */
+}
+/*
+.gantt-scale-year-month {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  border-bottom: 1px solid #ccc;
+  background-color: #e0e0e0;
+  z-index: 2;
+}
+
+.gantt-scale-year {
+  position: absolute;
+  height: 30px;
+  text-align: center;
+  border-right: 1px solid #ccc;
+  padding: 5px 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  background-color: #d0d0d0;
+}
+*/
+/*
+.gantt-scale-month {
+  position: absolute;
+  height: 20px;
+  text-align: center;
+  border-right: 1px solid #ccc;
+  padding: 0px 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+}
+
+.gantt-scale-day {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  height: 30px;
+  border-bottom: 1px solid #ccc;
+  background-color: #f5f5f5;
+  z-index: 1;
+}
+
+.gantt-scale-day {
+  position: absolute;
+  width: 50px;
+  text-align: center;
+  border-right: 1px solid #ccc;
+  padding: 5px 0;
+  font-size: 12px;
+  color: #666;
+}
+*/
+
+.gantt-task {
+  position: absolute;
+  height: 30px;
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  cursor: move;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: box-shadow 0.3s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  z-index: 999;
+}
+
+.gantt-task-handle {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 100%;
+  cursor: ew-resize;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: background-color 0.2s ease;
+  z-index: 999;
+}
+
+.gantt-task-handle:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.start-handle {
+  left: 0;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.end-handle {
+  right: 0;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.gantt-task:hover .gantt-task-handle {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.gantt-task.dragging {
+  opacity: 0.8;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.gantt-task.dragging .gantt-task-handle {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.task-subject {
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.nodata {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.gantt-zoom-controls {
+  position: absolute;
+  top: 0;
+  right: 20px;
+  z-index: 3;
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.zoom-button {
+  padding: 2px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.zoom-button:hover {
+  background-color: #f0f0f0;
+  border-color: #999;
+}
+
+.zoom-button:active {
+  background-color: #e0e0e0;
+} 
