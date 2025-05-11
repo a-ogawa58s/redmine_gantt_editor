@@ -6,7 +6,7 @@ class GanttEditorController < ApplicationController
     @issues = @project.issues
       .includes(:status, :tracker)
       .where.not(start_date: nil)
-      .where.not(due_date: nil)
+      #.where.not(due_date: nil)
       .order(:start_date)
 
     Rails.logger.info "Found #{@issues.count} issues"

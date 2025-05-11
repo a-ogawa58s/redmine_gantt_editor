@@ -8,8 +8,8 @@
     var $container = this;
     var draggedTask = null;
     var dragOffset = 0;
-    var zoomLevel = 0.75; // デフォルトのズームレベルを0.75に変更
-    var pixelsPerDay = 37.5; // デフォルトの1日あたりのピクセル数（50 * 0.75）
+    var zoomLevel = 0.5; // デフォルトのズームレベル
+    var pixelsPerDay = 25; // デフォルトの1日あたりのピクセル数（50 * 0.5）
     var dragMode = null; // 'move', 'start', 'end'
 
     function init() {
@@ -39,12 +39,12 @@
         });
 
       $zoomControls.append($zoomOut, $zoomIn, $zoomReset);
-      $container.prepend($zoomControls);
-      //$container.parent().append($zoomControls); // チャートの親要素に追加
+      //$container.prepend($zoomControls);
+      $container.parent().find('#gantt-editor-title').append($zoomControls); // チャートの親要素に追加
 
       // ズームボタンのイベントハンドラ
       $zoomOut.on('click', function() {
-        if (zoomLevel > 0.5) {
+        if (zoomLevel >= 0.5) {
           zoomLevel -= 0.25;
           pixelsPerDay = 50 * zoomLevel;
           $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
@@ -53,7 +53,7 @@
       });
 
       $zoomIn.on('click', function() {
-        if (zoomLevel < 1.0) {
+        if (zoomLevel <= 0.75) {
           zoomLevel += 0.25;
           pixelsPerDay = 50 * zoomLevel;
           $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
@@ -62,8 +62,8 @@
       });
 
       $zoomReset.on('click', function() {
-        zoomLevel = 0.75; // リセット時のズームレベルも0.75に変更
-        pixelsPerDay = 37.5; // リセット時のピクセル数も調整
+        zoomLevel = 0.5; // リセット時のズームレベル
+        pixelsPerDay = 25; // リセット時のピクセル数も調整
         $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
         renderTasks();
       });
@@ -82,6 +82,9 @@
       var lastDate = new Date(Math.max.apply(null, settings.tasks.map(function(t) {
         return new Date(t.due_date);
       })));
+      // 日付の範囲を計算（3ヶ月分＋月末）
+      lastDate.setMonth(lastDate.getMonth() + 3);
+      lastDate.setDate(-1);
 
       // 日付目盛りを表示
       renderDateScale(firstDate, lastDate);
@@ -95,7 +98,7 @@
           .attr('draggable', 'true')
           .attr('title', '件名: ' + task.subject + '\n' +
                         '開始日: ' + task.start_date + '\n' +
-                        '期日: ' + task.due_date + '\n' +
+                        '期日: ' + (task.due_date === null ? '未設定' : task.due_date) + '\n' +
                         'ステータス: ' + task.status_name + '\n' +
                         '進捗率: ' + (task.done_ratio || 0) + '%')
           .html('<span class="task-subject">' + task.subject + '</span>')
@@ -152,7 +155,6 @@
     }
 
     function renderDateScale(firstDate, lastDate) {
-
       // 月の目盛り
       var $monthScale = $('<div>')
         .addClass('gantt-scale-month');
@@ -211,7 +213,7 @@
       while (currentDate <= lastDate) {
         var dayOfWeek = currentDate.getDay();
         var isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 日曜日, 6: 土曜日
-        var weekendBgColor = dayOfWeek === 0 ? 'rgba(255, 200, 200, 0.3)' : 'rgba(200, 200, 255, 0.3)'; // 日曜: 薄い赤, 土曜: 薄い青
+        var weekendBgColor = dayOfWeek === 0 ? 'rgba(250, 200, 200)' : 'rgba(215, 215, 250)'; // 日曜: 薄い赤, 土曜: 薄い青
 
         // 曜日の表示
         var $weekday = $('<div>')
@@ -297,6 +299,11 @@
     }
 
     function getTaskColor(task) {
+      // 進捗率が100%の場合はグレーで表示
+      if (task.done_ratio === 100) {
+        return '#808080'; // グレー
+      }
+
       var colors = {
         'Bug': '#ff0000',
         'Feature': '#4CAF50',
@@ -323,7 +330,8 @@
         initialX = e.clientX;
         initialStartDate = new Date(draggedTask.start_date);
         initialDueDate = new Date(draggedTask.due_date);
-        
+        initialDueDate = new Date(draggedTask.due_date === null ? draggedTask.start_date : draggedTask.due_date);
+
         dragMode = 'move';
         $(this).addClass('dragging');
       });
@@ -351,7 +359,7 @@
         // 初期位置と日付を保存
         initialX = e.clientX;
         initialStartDate = new Date(draggedTask.start_date);
-        initialDueDate = new Date(draggedTask.due_date);
+        initialDueDate = new Date(draggedTask.due_date === null ? draggedTask.start_date : draggedTask.due_date);
         
         dragMode = $(this).hasClass('start-handle') ? 'start' : 'end';
         $task.addClass('dragging');
@@ -456,6 +464,7 @@
     }
 
     function calculateWidth(startDate, dueDate) {
+      dueDate = dueDate === null ? startDate : dueDate;
       var days = Math.round((new Date(dueDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
       return Math.max(0, (days + 1) * pixelsPerDay - 10); // 右ハンドルの位置を調整
     }

@@ -4,8 +4,10 @@
 <% end %>
 
 <div class="gantt-editor-container">
-  <h2><%= l(:label_gantt_editor) %></h2>
-  
+  <div id="gantt-editor-title" style="position: relative">
+    <h2><%= l(:label_gantt_editor) %></h2>
+  </div>
+
   <% if @issues.any? %>
     <div id="gantt-editor" class="gantt-editor-chart">
       <!-- タスクはJavaScriptで動的に追加されます -->

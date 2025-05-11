@@ -1,39 +1,45 @@
 .gantt-editor-container {
-  margin: 5px;
+  /*margin-top: 5px;*/
+  margin-right: 5px;
 }
 
 .gantt-editor-chart {
   position: relative;
-  height: 500px;
+  height: 550px;
   border: 1px solid #ccc;
+  overflow: scroll;
   overflow-x: auto;
   background: #f9f9f9;
-  padding: 20px;
-  padding-top: 80px; /* 日付目盛りの高さを考慮して調整 */
 }
 
 .gantt-scale-month {
-  position: absolute;
+  position: sticky;
+  position: -webkit-sticky;
   top: 0px;
   left: 0px;
   right: 0px;
   height: 20px;
+  z-index: 999;
 }
 
 .gantt-scale-weekday {
-  position: absolute;
+  position: sticky;
+  position: -webkit-sticky;
   top: 20px;
   left: 0px;
   right: 0px;
   height: 20px;
+  z-index: 999;
 }
 
 .gantt-scale-day {
-  position: absolute;
+  position: sticky;
+  position: -webkit-sticky;
   top: 40px;
   left: 0px;
   right: 0px;
   height: 20px;
+  z-index: 999;
 }
 
 .gantt-task {
@@ -49,7 +55,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  z-index: 999;
+  z-index: 2;
 }
 
 .gantt-task-handle {
@@ -60,7 +66,7 @@
   cursor: ew-resize;
   background-color: rgba(255, 255, 255, 0.2);
   transition: background-color 0.2s ease;
-  z-index: 999;
+  z-index: 2;
 }
 
 .gantt-task-handle:hover {
@@ -108,13 +114,13 @@
   position: absolute;
   top: 0;
   right: 20px;
-  z-index: 3;
   display: flex;
   gap: 5px;
   padding: 5px;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
 .zoom-button {
