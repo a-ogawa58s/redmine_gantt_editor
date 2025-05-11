@@ -21,51 +21,20 @@
 
     function renderZoomControls() {
       var $zoomControls = $('<div>')
-        .addClass('gantt-zoom-controls')
-        .css({
-          position: 'absolute',
-          top: '0',
-          //right: '20px',
-          zIndex: '3',
-          display: 'flex',
-          gap: '5px',
-          padding: '5px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: '3px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        });
+        .addClass('gantt-zoom-controls');
 
       var $zoomOut = $('<button>')
         .text('-')
-        .addClass('zoom-button')
-        .css({
-          padding: '2px 8px',
-          border: '1px solid #ccc',
-          borderRadius: '3px',
-          backgroundColor: '#fff',
-          cursor: 'pointer'
-        });
+        .addClass('zoom-button');
 
       var $zoomIn = $('<button>')
         .text('+')
-        .addClass('zoom-button')
-        .css({
-          padding: '2px 8px',
-          border: '1px solid #ccc',
-          borderRadius: '3px',
-          backgroundColor: '#fff',
-          cursor: 'pointer'
-        });
+        .addClass('zoom-button');
 
       var $zoomReset = $('<button>')
         .text('リセット')
         .addClass('zoom-button')
         .css({
-          padding: '2px 8px',
-          border: '1px solid #ccc',
-          borderRadius: '3px',
-          backgroundColor: '#fff',
-          cursor: 'pointer',
           fontSize: '12px'
         });
 
@@ -183,41 +152,18 @@
     }
 
     function renderDateScale(firstDate, lastDate) {
+
       // 月の目盛り
       var $monthScale = $('<div>')
-        .addClass('gantt-scale-month')
-        .css({
-          position: 'absolute',
-          top: '0',
-          left: '0',
-          right: '0',
-          height: '20px',
-          //zIndex: '3'
-        });
+        .addClass('gantt-scale-month');
 
       // 曜日の目盛り
       var $weekdayScale = $('<div>')
-        .addClass('gantt-scale-weekday')
-        .css({
-          position: 'absolute',
-          top: '19px',
-          left: '0',
-          right: '0',
-          height: '20px',
-          //zIndex: '2'
-        });
+        .addClass('gantt-scale-weekday');
 
       // 日の目盛り
       var $dayScale = $('<div>')
-        .addClass('gantt-scale-day')
-        .css({
-          position: 'absolute',
-          top: '40px',
-          left: '0',
-          right: '0',
-          height: '20px',
-          //zIndex: '1'
-        });
+        .addClass('gantt-scale-day');
 
       // 月の表示
       var currentDate = new Date(firstDate);
@@ -242,17 +188,18 @@
           .text(formatMonthYear(currentDate.getMonth(), currentDate.getFullYear()))
           .css({
             position: 'absolute',
+            top: '0px',
+            height: '20px',
             left: monthLeft + 'px',
             width: monthWidth + 'px',
             textAlign: 'center',
+            boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
             backgroundColor: '#e0e0e0',
-            padding: '0px 0',
             fontSize: Math.max(12, 12 * zoomLevel) + 'px',
             fontWeight: 'bold',
             color: '#333',
-            zIndex: '3' // 3にすること
           });
         $monthScale.append($monthLabel);
         
@@ -272,13 +219,15 @@
           .text(formatWeekday(dayOfWeek))
           .css({
             position: 'absolute',
+            top: '0px',
+            height: '20px',
             left: calculateLeftPosition(currentDate, firstDate),
             width: pixelsPerDay + 'px',
             textAlign: 'center',
-            //borderRight: '1px solid #ccc',
+            boxSizing: 'border-box',
+            borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
             backgroundColor: isWeekend ? weekendBgColor : '#f0f0f0',
-            padding: '0px 0',
             fontSize: Math.max(12, 12 * zoomLevel) + 'px',
             color: getWeekdayColor(dayOfWeek)
           });
@@ -290,13 +239,16 @@
           .text(currentDate.getDate())
           .css({
             position: 'absolute',
+            top: '0px',
+            height: '20px',
             left: calculateLeftPosition(currentDate, firstDate),
             width: pixelsPerDay + 'px',
             textAlign: 'center',
-            //borderRight: '1px solid #ccc',
+            paddingTop: '3px',
+            boxSizing: 'border-box',
+            borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
             backgroundColor: isWeekend ? weekendBgColor : '#f5f5f5',
-            padding: '0px 0',
             fontSize: Math.max(12, 12 * zoomLevel) + 'px',
             color: '#666'
           });
@@ -307,13 +259,13 @@
           .addClass('gantt-vertical-line')
           .css({
             position: 'absolute',
-            left: calculateLeftPosition(currentDate, firstDate),
-            top: '0',
-            width: pixelsPerDay + 'px',
-            borderRight: '1px solid #ccc',
-            //backgroundColor: isWeekend ? weekendBgColor : '#ffffff',
+            top: '60px',
             height: '100%',
-            zIndex: '0'
+            left: calculateLeftPosition(currentDate, firstDate),
+            width: pixelsPerDay + 'px',
+            boxSizing: 'border-box',
+            borderRight: '1px solid #ccc',
+            backgroundColor: isWeekend ? weekendBgColor : '#ffffff',
           });
         $container.append($verticalLine);
 

@@ -11,63 +11,30 @@
   padding: 20px;
   padding-top: 80px; /* 日付目盛りの高さを考慮して調整 */
 }
-/*
-.gantt-scale-year-month {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 30px;
-  border-bottom: 1px solid #ccc;
-  background-color: #e0e0e0;
-  z-index: 2;
-}
 
-.gantt-scale-year {
-  position: absolute;
-  height: 30px;
-  text-align: center;
-  border-right: 1px solid #ccc;
-  padding: 5px 0;
-  font-size: 14px;
-  font-weight: bold;
-  color: #000;
-  background-color: #d0d0d0;
-}
-*/
-/*
 .gantt-scale-month {
   position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
   height: 20px;
-  text-align: center;
-  border-right: 1px solid #ccc;
-  padding: 0px 0;
-  font-size: 12px;
-  font-weight: bold;
-  color: #333;
+}
+
+.gantt-scale-weekday {
+  position: absolute;
+  top: 20px;
+  left: 0px;
+  right: 0px;
+  height: 20px;
 }
 
 .gantt-scale-day {
   position: absolute;
-  top: 30px;
-  left: 0;
-  right: 0;
-  height: 30px;
-  border-bottom: 1px solid #ccc;
-  background-color: #f5f5f5;
-  z-index: 1;
+  top: 40px;
+  left: 0px;
+  right: 0px;
+  height: 20px;
 }
-
-.gantt-scale-day {
-  position: absolute;
-  width: 50px;
-  text-align: center;
-  border-right: 1px solid #ccc;
-  padding: 5px 0;
-  font-size: 12px;
-  color: #666;
-}
-*/
 
 .gantt-task {
   position: absolute;
