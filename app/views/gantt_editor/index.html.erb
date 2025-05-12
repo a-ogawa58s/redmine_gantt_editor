@@ -16,7 +16,7 @@
     <script type="text/javascript">
       $(document).ready(function() {
         var tasks = <%= raw @issues.to_json(
-          only: [:id, :subject, :start_date, :due_date, :done_ratio],
+          only: [:id, :subject, :start_date, :due_date, :done_ratio, :parent_id],
           include: {  
             status: { only: [:name] },
             tracker: { only: [:name] }
@@ -35,7 +35,8 @@
               due_date: task.due_date,
               status_name: task.status ? task.status.name : '',
               tracker_name: task.tracker ? task.tracker.name : '',
-              done_ratio: task.done_ratio
+              done_ratio: task.done_ratio,
+              parent_id: task.parent_id
             };
           })
         });

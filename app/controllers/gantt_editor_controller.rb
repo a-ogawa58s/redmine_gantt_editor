@@ -14,7 +14,7 @@ class GanttEditorController < ApplicationController
 
     Rails.logger.info "Found #{@issues.count} issues"
     @issues.each do |issue|
-      Rails.logger.info "Issue ##{issue.id}: #{issue.subject} (#{issue.start_date} - #{issue.due_date})"
+      Rails.logger.info "Issue ##{issue.id}: #{issue.subject} (#{issue.start_date} - #{issue.due_date}) #{issue.parent_id}"
     end
 
     respond_to do |format|
@@ -24,13 +24,13 @@ class GanttEditorController < ApplicationController
           tasks: @issues.map { |issue| 
             {
               id: issue.id,
-              parent_id: issue.parent,
               subject: issue.subject,
               start_date: issue.start_date,
               due_date: issue.due_date,
               status_name: issue.status.name,
               tracker_name: issue.tracker.name,
-              done_ratio: issue.done_ratio
+              done_ratio: issue.done_ratio,
+              parent_id: issue.parent_id
             }
           }
         }
@@ -96,7 +96,7 @@ class GanttEditorController < ApplicationController
         tracker_name: issue.tracker_name,
         status_name: issue.status_name,
         done_ratio: issue.done_ratio,
-        parent_id: issue.parent_id
+        parent_id: issue.parent
       }
     end
 

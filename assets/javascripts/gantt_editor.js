@@ -9,7 +9,7 @@
     var draggedTask = null;
     var dragOffset = 0;
     var zoomLevel = 0.5; // デフォルトのズームレベル
-    var pixelsPerDay = 25; // デフォルトの1日あたりのピクセル数（50 * 0.5）
+    var pixelsPerDay = 20;//25; // デフォルトの1日あたりのピクセル数（50 * 0.5）
     var dragMode = null; // 'move', 'start', 'end'
 
     function init() {
@@ -46,7 +46,7 @@
       $zoomOut.on('click', function() {
         if (zoomLevel >= 0.5) {
           zoomLevel -= 0.25;
-          pixelsPerDay = 50 * zoomLevel;
+          pixelsPerDay = 40 * zoomLevel;
           $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
           renderTasks();
         }
@@ -55,7 +55,7 @@
       $zoomIn.on('click', function() {
         if (zoomLevel <= 0.75) {
           zoomLevel += 0.25;
-          pixelsPerDay = 50 * zoomLevel;
+          pixelsPerDay = 40 * zoomLevel;
           $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
           renderTasks();
         }
@@ -63,7 +63,7 @@
 
       $zoomReset.on('click', function() {
         zoomLevel = 0.5; // リセット時のズームレベル
-        pixelsPerDay = 25; // リセット時のピクセル数も調整
+        pixelsPerDay = 20; // リセット時のピクセル数も調整
         $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
         renderTasks();
       });
@@ -86,8 +86,17 @@
       lastDate.setMonth(lastDate.getMonth() + 3);
       lastDate.setDate(-1);
 
+      // チケット一覧を表示
+      renderTicketList();
+
+      // 日付目盛りを表示
+      renderDateScale(firstDate, lastDate);
+
+      // チケットを親子関係でソート
+      var sortedTasks = sortTasksByParent(settings.tasks);
+
       // タスクを表示
-      settings.tasks.forEach(function(task, index) {
+      sortedTasks.forEach(function(task, index) {
         console.log('タスクを表示:', task);
         var $task = $('<div>')
           .addClass('gantt-task')
@@ -101,20 +110,21 @@
           .html('<span class="task-subject">' + task.subject + '</span>')
           .css({
             position: 'absolute',
-            top: (index * 30 + 65) + 'px', // 35px = タスクの高さ(25px) + 余白(10px)
+            top: (index * 35 + 65) + 'px', // 35px = タスクの高さ(25px) + 余白(10px)
             left: calculateLeftPosition(task.start_date, firstDate),
             width: calculateWidth(task.start_date, task.due_date),
             height: '20px', // 高さを30pxから25pxに変更
             backgroundColor: getTaskColor(task),
             color: 'white',
-            padding: '1px 5px', // パディングを調整
+            padding: '3px 5px', // パディングを調整
             borderRadius: '3px',
             cursor: 'move',
             userSelect: 'none',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             transition: 'box-shadow 0.3s ease',
             fontSize: '12px', // フォントサイズを調整
-            lineHeight: '19px' // 行の高さを調整
+            lineHeight: '19px', // 行の高さを調整
+            marginLeft: task.parent_id ? '20px' : '0' // 子チケットは20pxインデント
           });
 
         // リサイズハンドルを追加
@@ -149,12 +159,6 @@
         $task.append($startHandle, $endHandle);
         $container.prepend($task);
       });
-
-      // 日付目盛りを表示
-      renderDateScale(firstDate, lastDate);
-
-      // チケット一覧を表示
-      renderTicketList();
     }
 
     function renderTicketList() {
