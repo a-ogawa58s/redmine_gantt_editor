@@ -110,13 +110,13 @@
           .html('<span class="task-subject">' + task.subject + '</span>')
           .css({
             position: 'absolute',
-            top: (index * 35 + 65) + 'px', // 35px = タスクの高さ(25px) + 余白(10px)
+            top: (index * 30 + 65) + 'px', // 30px = タスクの高さ(20px) + 余白(10px)
             left: calculateLeftPosition(task.start_date, firstDate),
             width: calculateWidth(task.start_date, task.due_date),
             height: '20px', // 高さを30pxから25pxに変更
             backgroundColor: getTaskColor(task),
             color: 'white',
-            padding: '3px 5px', // パディングを調整
+            padding: '1px 5px', // パディングを調整
             borderRadius: '3px',
             cursor: 'move',
             userSelect: 'none',
@@ -124,7 +124,7 @@
             transition: 'box-shadow 0.3s ease',
             fontSize: '12px', // フォントサイズを調整
             lineHeight: '19px', // 行の高さを調整
-            marginLeft: task.parent_id ? '20px' : '0' // 子チケットは20pxインデント
+            //marginLeft: task.parent_id ? '20px' : '0' // 子チケットは20pxインデント
           });
 
         // リサイズハンドルを追加
