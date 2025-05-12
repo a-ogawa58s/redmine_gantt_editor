@@ -1,9 +1,12 @@
 class GanttEditorController < ApplicationController
   before_action :find_project
   before_action :authorize
+  #before_action :find_optional_project
 
   def index
     @issues = @project.issues
+      #.select('issues.*, trackers.name as tracker_name, issue_statuses.name as status_name')
+      #.joins(:tracker, :status)
       .includes(:status, :tracker)
       .where.not(start_date: nil)
       #.where.not(due_date: nil)
@@ -21,6 +24,7 @@ class GanttEditorController < ApplicationController
           tasks: @issues.map { |issue| 
             {
               id: issue.id,
+              parent_id: issue.parent,
               subject: issue.subject,
               start_date: issue.start_date,
               due_date: issue.due_date,
@@ -73,6 +77,30 @@ class GanttEditorController < ApplicationController
       Rails.logger.error "Error updating issue dates: #{e.message}"
       render json: { success: false, errors: [e.message] }, status: :unprocessable_entity
     end
+  end
+
+  def get_tasks
+    @project = Project.find(params[:project_id])
+    @issues = @project.issues
+      .select('issues.*, trackers.name as tracker_name, issue_statuses.name as status_name')
+      .joins(:tracker, :status)
+      .where.not(start_date: nil)
+      .order(:id)
+
+    tasks = @issues.map do |issue|
+      {
+        id: issue.id,
+        subject: issue.subject,
+        start_date: issue.start_date,
+        due_date: issue.due_date,
+        tracker_name: issue.tracker_name,
+        status_name: issue.status_name,
+        done_ratio: issue.done_ratio,
+        parent_id: issue.parent_id
+      }
+    end
+
+    render json: { tasks: tasks }
   end
 
   private

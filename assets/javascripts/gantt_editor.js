@@ -86,9 +86,6 @@
       lastDate.setMonth(lastDate.getMonth() + 3);
       lastDate.setDate(-1);
 
-      // 日付目盛りを表示
-      renderDateScale(firstDate, lastDate);
-
       // タスクを表示
       settings.tasks.forEach(function(task, index) {
         console.log('タスクを表示:', task);
@@ -104,13 +101,13 @@
           .html('<span class="task-subject">' + task.subject + '</span>')
           .css({
             position: 'absolute',
-            top: (index * 35 + 65) + 'px', // 35px = タスクの高さ(25px) + 余白(10px)
+            top: (index * 30 + 65) + 'px', // 35px = タスクの高さ(25px) + 余白(10px)
             left: calculateLeftPosition(task.start_date, firstDate),
             width: calculateWidth(task.start_date, task.due_date),
             height: '20px', // 高さを30pxから25pxに変更
             backgroundColor: getTaskColor(task),
             color: 'white',
-            padding: '3px 5px', // パディングを調整
+            padding: '1px 5px', // パディングを調整
             borderRadius: '3px',
             cursor: 'move',
             userSelect: 'none',
@@ -150,8 +147,102 @@
           });
 
         $task.append($startHandle, $endHandle);
-        $container.append($task);
+        $container.prepend($task);
       });
+
+      // 日付目盛りを表示
+      renderDateScale(firstDate, lastDate);
+
+      // チケット一覧を表示
+      renderTicketList();
+    }
+
+    function renderTicketList() {
+      // チケット一覧のコンテナを作成
+      var $ticketList = $('<div>')
+        .addClass('gantt-ticket-list')
+        .css({
+          position: 'absolute',
+          paddingTop: '60px',
+          left: '0',
+          top: '0px',
+          width: '200px',
+          height: '100%',
+          backgroundColor: '#f5f5f5',
+          boxSizing: 'border-box',
+          borderRight: '1px solid #ccc',
+          zIndex: '999',
+          overflowY: 'auto'
+        });
+
+      // チケットを親子関係でソート
+      var sortedTasks = sortTasksByParent(settings.tasks);
+
+      // チケット一覧を表示
+      sortedTasks.forEach(function(task, index) {
+        var indent = task.parent_id ? 20 : 0; // 子チケットは20pxインデント
+        var $ticket = $('<div>')
+          .addClass('gantt-ticket-item')
+          .attr('data-task-id', task.id)
+          .css({
+            padding: '5px 10px',
+            paddingLeft: (10 + indent) + 'px',
+            boxSizing: 'border-box',
+            borderBottom: '1px solid #ddd',
+            fontSize: '12px',
+            lineHeight: '20px',
+            cursor: 'pointer',
+            backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5'
+          })
+          .html(task.subject);
+
+        // クリックイベントを追加
+        $ticket.on('click', function() {
+          window.open('/issues/' + task.id, 'open_ticket');
+        });
+
+        $ticketList.append($ticket);
+      });
+
+      $container.prepend($ticketList);
+
+      // ガントチャートの位置を調整
+      //$container.css({
+      //  paddingLeft: '200px' // チケット一覧の幅分だけ右にずらす
+      //});
+    }
+
+    function sortTasksByParent(tasks) {
+      // 親チケットを取得
+      var parentTasks = tasks.filter(function(task) {
+        return !task.parent_id;
+      });
+
+      // 子チケットを取得
+      var childTasks = tasks.filter(function(task) {
+        return task.parent_id;
+      });
+
+      // 親チケットの下に子チケットを配置
+      var sortedTasks = [];
+      parentTasks.forEach(function(parentTask) {
+        sortedTasks.push(parentTask);
+        // この親の子チケットを追加
+        childTasks.forEach(function(childTask) {
+          if (childTask.parent_id === parentTask.id) {
+            sortedTasks.push(childTask);
+          }
+        });
+      });
+
+      // 親のない子チケットを追加
+      childTasks.forEach(function(childTask) {
+        if (!tasks.find(function(t) { return t.id === childTask.parent_id; })) {
+          sortedTasks.push(childTask);
+        }
+      });
+
+      return sortedTasks;
     }
 
     function renderDateScale(firstDate, lastDate) {
@@ -166,6 +257,10 @@
       // 日の目盛り
       var $dayScale = $('<div>')
         .addClass('gantt-scale-day');
+
+      // 縦の罫線
+      var $verticalLineScale = $('<div>')
+        .addClass('gantt-scale-vertical-line');
 
       // 月の表示
       var currentDate = new Date(firstDate);
@@ -261,7 +356,7 @@
           .addClass('gantt-vertical-line')
           .css({
             position: 'absolute',
-            top: '60px',
+            top: '0px',
             height: '100%',
             left: calculateLeftPosition(currentDate, firstDate),
             width: pixelsPerDay + 'px',
@@ -269,7 +364,8 @@
             borderRight: '1px solid #ccc',
             backgroundColor: isWeekend ? weekendBgColor : '#ffffff',
           });
-        $container.append($verticalLine);
+        //$container.append($verticalLine);
+        $verticalLineScale.append($verticalLine);
 
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -277,6 +373,7 @@
       $container.prepend($dayScale);
       $container.prepend($weekdayScale);
       $container.prepend($monthScale);
+      $container.prepend($verticalLineScale);
     }
 
     function formatMonthYear(month, year) {
@@ -460,7 +557,7 @@
 
     function calculateLeftPosition(date, firstDate) {
       var days = Math.round((new Date(date) - new Date(firstDate)) / (1000 * 60 * 60 * 24));
-      return Math.max(0, days * pixelsPerDay);
+      return Math.max(0, days * pixelsPerDay) + 200;
     }
 
     function calculateWidth(startDate, dueDate) {

@@ -13,8 +13,7 @@
 }
 
 .gantt-scale-month {
-  position: sticky;
-  position: -webkit-sticky;
+  position: absolute;
   top: 0px;
   left: 0px;
   right: 0px;
@@ -23,8 +22,7 @@
 }
 
 .gantt-scale-weekday {
-  position: sticky;
-  position: -webkit-sticky;
+  position: absolute;
   top: 20px;
   left: 0px;
   right: 0px;
@@ -33,13 +31,20 @@
 }
 
 .gantt-scale-day {
-  position: sticky;
-  position: -webkit-sticky;
+  position: absolute;
   top: 40px;
   left: 0px;
   right: 0px;
   height: 20px;
   z-index: 999;
+}
+
+.gantt-scale-vertical-line {
+  position: absolute;
+  top: 60px;
+  left: 0px;
+  right: 0px;
+  height: 100%;
 }
 
 .gantt-task {

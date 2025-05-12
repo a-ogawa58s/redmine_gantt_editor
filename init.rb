@@ -8,10 +8,15 @@ Redmine::Plugin.register :redmine_gantt_editor do
   url 'https://github.com/yourusername/redmine_gantt_editor'
   author_url 'https://github.com/yourusername'
 
-  permission :edit_gantt_dates, :gantt_editor => [:index, :update_dates]
+  #project_module :gantt_editor do
+  #  permission :gantt_editor, {:gantt_editor => [:index, :update_dates]}
+  #end
 
   menu :project_menu, :gantt_editor, { controller: 'gantt_editor', action: 'index' },
        caption: :label_gantt_editor,
        after: :gantt,
        param: :project_id
-end 
+
+  permission :edit_gantt_dates, :gantt_editor => [:index, :update_dates]
+
+end
