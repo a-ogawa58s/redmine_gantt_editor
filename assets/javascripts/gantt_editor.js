@@ -179,6 +179,20 @@
           overflowY: 'auto'
         });
 
+      // リサイズハンドルを追加
+      var $resizeHandle = $('<div>')
+        .addClass('gantt-ticket-list-resize-handle')
+        .css({
+          position: 'absolute',
+          right: '0',
+          top: '0',
+          width: '5px',
+          height: '100%',
+          cursor: 'ew-resize',
+          backgroundColor: 'transparent',
+          zIndex: '1000'
+        });
+
       // チケットを親子関係でソート
       var sortedTasks = sortTasksByParent(settings.tasks);
 
@@ -196,7 +210,10 @@
             fontSize: '12px',
             lineHeight: '20px',
             cursor: 'pointer',
-            backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5'
+            backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           })
           .html(task.subject);
 
@@ -208,12 +225,39 @@
         $ticketList.append($ticket);
       });
 
+      $ticketList.append($resizeHandle);
       $container.prepend($ticketList);
 
+      // リサイズハンドルのイベント
+      var isResizing = false;
+      var startX = 0;
+      var startWidth = 0;
+
+      $resizeHandle.on('mousedown', function(e) {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = $ticketList.width();
+        e.preventDefault();
+      });
+
+      $(document).on('mousemove', function(e) {
+        if (!isResizing) return;
+
+        var deltaX = e.clientX - startX;
+        var newWidth = Math.max(100, Math.min(400, startWidth + deltaX)); // 最小100px、最大400px
+
+        $ticketList.css('width', newWidth + 'px');
+        $container.css('paddingLeft', newWidth + 'px');
+      });
+
+      $(document).on('mouseup', function() {
+        isResizing = false;
+      });
+
       // ガントチャートの位置を調整
-      //$container.css({
-      //  paddingLeft: '200px' // チケット一覧の幅分だけ右にずらす
-      //});
+      $container.css({
+        paddingLeft: $ticketList.width() + 'px'
+      });
     }
 
     function sortTasksByParent(tasks) {
@@ -312,7 +356,9 @@
       while (currentDate <= lastDate) {
         var dayOfWeek = currentDate.getDay();
         var isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 日曜日, 6: 土曜日
+        var isHoliday = isHolidayMethod(currentDate); // 祝日
         var weekendBgColor = dayOfWeek === 0 ? 'rgba(250, 200, 200)' : 'rgba(215, 215, 250)'; // 日曜: 薄い赤, 土曜: 薄い青
+        var holidayBgColor = 'rgba(250, 200, 200)'; // 祝日: 薄い赤
 
         // 曜日の表示
         var $weekday = $('<div>')
@@ -328,7 +374,7 @@
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
-            backgroundColor: isWeekend ? weekendBgColor : '#f0f0f0',
+            backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f0f0f0',
             fontSize: Math.max(12, 12 * zoomLevel) + 'px',
             color: getWeekdayColor(dayOfWeek)
           });
@@ -349,7 +395,7 @@
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
-            backgroundColor: isWeekend ? weekendBgColor : '#f5f5f5',
+            backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f5f5f5',
             fontSize: Math.max(12, 12 * zoomLevel) + 'px',
             color: '#666'
           });
@@ -366,9 +412,8 @@
             width: pixelsPerDay + 'px',
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
-            backgroundColor: isWeekend ? weekendBgColor : '#ffffff',
+            backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#ffffff',
           });
-        //$container.append($verticalLine);
         $verticalLineScale.append($verticalLine);
 
         currentDate.setDate(currentDate.getDate() + 1);
@@ -659,6 +704,49 @@
           alert(errorMessage);
         }
       });
+    }
+
+    // 祝日判定関数
+    function isHolidayMethod(date) {
+      // 日本の祝日判定（簡易版）
+      var year = date.getFullYear();
+      var month = date.getMonth() + 1;
+      var day = date.getDate();
+
+      // 元旦
+      if (month === 1 && day === 1) return true;
+      // 成人の日（1月の第2月曜日）
+      if (month === 1 && day >= 8 && day <= 14 && date.getDay() === 1) return true;
+      // 建国記念日
+      if (month === 2 && day === 11) return true;
+      // 天皇誕生日
+      if (month === 2 && day === 23) return true;
+      // 春分の日（簡易計算）
+      if (month === 3 && day === Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4))) return true;
+      // 昭和の日
+      if (month === 4 && day === 29) return true;
+      // 憲法記念日
+      if (month === 5 && day === 3) return true;
+      // みどりの日
+      if (month === 5 && day === 4) return true;
+      // こどもの日
+      if (month === 5 && day === 5) return true;
+      // 海の日（7月の第3月曜日）
+      if (month === 7 && day >= 15 && day <= 21 && date.getDay() === 1) return true;
+      // 山の日
+      if (month === 8 && day === 11) return true;
+      // 敬老の日（9月の第3月曜日）
+      if (month === 9 && day >= 15 && day <= 21 && date.getDay() === 1) return true;
+      // 秋分の日（簡易計算）
+      if (month === 9 && day === Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4))) return true;
+      // スポーツの日（10月の第2月曜日）
+      if (month === 10 && day >= 8 && day <= 14 && date.getDay() === 1) return true;
+      // 文化の日
+      if (month === 11 && day === 3) return true;
+      // 勤労感謝の日
+      if (month === 11 && day === 23) return true;
+
+      return false;
     }
 
     init();
