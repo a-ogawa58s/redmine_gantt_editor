@@ -1,13 +1,16 @@
 class GanttEditorController < ApplicationController
+  unloadable
+
   before_action :find_project
   before_action :authorize
+  before_action :check_module_enabled
   #before_action :find_optional_project
 
   def index
     @issues = @project.issues
       #.select('issues.*, trackers.name as tracker_name, issue_statuses.name as status_name')
       #.joins(:tracker, :status)
-      .includes(:status, :tracker)
+      .includes(:status, :tracker, :priority, :assigned_to, :parent)
       .where.not(start_date: nil)
       #.where.not(due_date: nil)
       .order(:start_date)
@@ -113,6 +116,12 @@ class GanttEditorController < ApplicationController
 
   def authorize
     unless User.current.allowed_to?(:view_gantt, @project) && User.current.allowed_to?(:edit_issues, @project)
+      render_403
+    end
+  end
+
+  def check_module_enabled
+    unless @project.module_enabled?(:gantt_editor)
       render_403
     end
   end

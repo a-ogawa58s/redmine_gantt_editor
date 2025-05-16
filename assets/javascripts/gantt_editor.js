@@ -110,10 +110,10 @@
           .html('<span class="task-subject">' + task.subject + '</span>')
           .css({
             position: 'absolute',
-            top: (index * 30 + 65) + 'px', // 30px = タスクの高さ(20px) + 余白(10px)
+            top: (index * 24 + 65) + 'px', // 30px = タスクの高さ(20px) + 余白(10px)
             left: calculateLeftPosition(task.start_date, firstDate),
             width: calculateWidth(task.start_date, task.due_date),
-            height: '20px', // 高さを30pxから25pxに変更
+            height: '16px', // 高さを30pxから16pxに変更
             backgroundColor: getTaskColor(task),
             color: 'white',
             padding: '1px 5px', // パディングを調整
@@ -122,9 +122,9 @@
             userSelect: 'none',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             transition: 'box-shadow 0.3s ease',
-            fontSize: '12px', // フォントサイズを調整
-            lineHeight: '19px', // 行の高さを調整
-            //marginLeft: task.parent_id ? '20px' : '0' // 子チケットは20pxインデント
+            fontSize: '10px', // フォントサイズを調整
+            lineHeight: '14px', // 行の高さを調整
+            //marginLeft: (task.level || 0) * 20 + 'px' // 階層レベルに応じてインデント（これはタスクの表示）
           });
 
         // リサイズハンドルを追加
@@ -198,7 +198,7 @@
 
       // チケット一覧を表示
       sortedTasks.forEach(function(task, index) {
-        var indent = task.parent_id ? 20 : 0; // 子チケットは20pxインデント
+        var indent = (task.level || 0) * 20; //task.parent_id ? 20 : 0; // 子チケットは20pxインデント
         var $ticket = $('<div>')
           .addClass('gantt-ticket-item')
           .attr('data-task-id', task.id)
@@ -207,8 +207,8 @@
             paddingLeft: (10 + indent) + 'px',
             boxSizing: 'border-box',
             borderBottom: '1px solid #ddd',
-            fontSize: '12px',
-            lineHeight: '20px',
+            fontSize: '10px',
+            lineHeight: '14px',
             cursor: 'pointer',
             backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5',
             whiteSpace: 'nowrap',
@@ -276,21 +276,32 @@
       parentTasks.forEach(function(parentTask) {
         sortedTasks.push(parentTask);
         // この親の子チケットを追加
-        childTasks.forEach(function(childTask) {
-          if (childTask.parent_id === parentTask.id) {
-            sortedTasks.push(childTask);
-          }
-        });
+        addChildTasks(parentTask.id, childTasks, sortedTasks, 1);
       });
 
       // 親のない子チケットを追加
       childTasks.forEach(function(childTask) {
         if (!tasks.find(function(t) { return t.id === childTask.parent_id; })) {
           sortedTasks.push(childTask);
+          // このチケットの子チケットも追加
+          addChildTasks(childTask.id, childTasks, sortedTasks, 1);
         }
       });
 
       return sortedTasks;
+    }
+
+    // 子チケットを再帰的に追加する関数
+    function addChildTasks(parentId, allChildTasks, sortedTasks, level) {
+      allChildTasks.forEach(function(childTask) {
+        if (childTask.parent_id === parentId) {
+          // 階層レベルを保存
+          childTask.level = level;
+          sortedTasks.push(childTask);
+          // この子チケットの子チケットも追加（再帰的に）
+          addChildTasks(childTask.id, allChildTasks, sortedTasks, level + 1);
+        }
+      });
     }
 
     function renderDateScale(firstDate, lastDate) {
@@ -342,7 +353,7 @@
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
             backgroundColor: '#e0e0e0',
-            fontSize: Math.max(12, 12 * zoomLevel) + 'px',
+            fontSize: Math.max(10, 10 * zoomLevel) + 'px',
             fontWeight: 'bold',
             color: '#333',
           });
@@ -375,7 +386,7 @@
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
             backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f0f0f0',
-            fontSize: Math.max(12, 12 * zoomLevel) + 'px',
+            fontSize: Math.max(10, 10 * zoomLevel) + 'px',
             color: getWeekdayColor(dayOfWeek)
           });
         $weekdayScale.append($weekday);
@@ -396,7 +407,7 @@
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
             backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f5f5f5',
-            fontSize: Math.max(12, 12 * zoomLevel) + 'px',
+            fontSize: Math.max(10, 10 * zoomLevel) + 'px',
             color: '#666'
           });
         $dayScale.append($day);
