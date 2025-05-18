@@ -31,6 +31,7 @@ class GanttEditorController < ApplicationController
               start_date: issue.start_date,
               due_date: issue.due_date,
               status_name: issue.status.name,
+              status_is_closed: issue.status.is_closed,
               tracker_name: issue.tracker.name,
               done_ratio: issue.done_ratio,
               parent_id: issue.parent_id

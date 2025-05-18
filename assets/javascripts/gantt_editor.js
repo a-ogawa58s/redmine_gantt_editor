@@ -5,7 +5,8 @@
       tasks: []
     }, options);
 
-    var $container = this;
+    var $ganttEditor = this;
+    var $container = null; // 描画箇所の本体
     var draggedTask = null;
     var dragOffset = 0;
     var zoomLevel = 0.5; // デフォルトのズームレベル
@@ -14,7 +15,20 @@
 
     function init() {
       console.log('Initializing gantt editor with tasks:', settings.tasks);
-      renderZoomControls();
+      //renderZoomControls();
+
+      $container = $('<div>')
+        .addClass('gantt-ticket-container')
+        .css({
+          position: 'absolute',
+          top: '0px',
+          left: '0px',
+          height: '100%',
+          width: '100%',
+          marginLeft: '300px'
+        });
+      $ganttEditor.prepend($container);
+    
       renderTasks();
       bindEvents();
     }
@@ -107,25 +121,61 @@
                         '期日: ' + (task.due_date === null ? '未設定' : task.due_date) + '\n' +
                         'ステータス: ' + task.status_name + '\n' +
                         '進捗率: ' + (task.done_ratio || 0) + '%')
-          .html('<span class="task-subject">' + task.subject + '</span>')
           .css({
             position: 'absolute',
-            top: (index * 24 + 65) + 'px', // 30px = タスクの高さ(20px) + 余白(10px)
+            top: (index * 24 + 60 + 3) + 'px', // 1行:24px, 目盛り:60px, タスク余白:3px
             left: calculateLeftPosition(task.start_date, firstDate),
             width: calculateWidth(task.start_date, task.due_date),
-            height: '16px', // 高さを30pxから16pxに変更
+            height: '16px',
             backgroundColor: getTaskColor(task),
             color: 'white',
-            padding: '1px 5px', // パディングを調整
+            padding: '1px 5px',
             borderRadius: '3px',
             cursor: 'move',
             userSelect: 'none',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             transition: 'box-shadow 0.3s ease',
-            fontSize: '10px', // フォントサイズを調整
-            lineHeight: '14px', // 行の高さを調整
-            //marginLeft: (task.level || 0) * 20 + 'px' // 階層レベルに応じてインデント（これはタスクの表示）
+            fontSize: '10px',
+            lineHeight: '14px',
+            overflow: 'hidden'
           });
+
+        // 進捗率に応じた背景色のグラデーション
+        var doneRatio = task.done_ratio || 0;
+        var $progress = $('<div>')
+          .addClass('task-progress')
+          .css({
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            height: '100%',
+            width: doneRatio + '%',
+            backgroundColor: '#4CAF50',
+            borderTopLeftRadius: '3px',
+            borderBottomLeftRadius: '3px',
+            borderTopRightRadius: doneRatio === 100 ? '3px' : '0px',
+            borderBottomRightRadius: doneRatio === 100 ? '3px' : '0px'
+          });
+
+        // チケットの題名
+        var $subject = $('<div>')
+          .addClass('task-subject')
+          .text(task.subject)
+          .css({
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            padding: '1px 5px',
+            boxSizing: 'border-box',
+            zIndex: '2',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          });
+
+        $task.append($progress, $subject);
 
         // リサイズハンドルを追加
         var $startHandle = $('<div>')
@@ -134,12 +184,13 @@
             position: 'absolute',
             left: '0',
             top: '0',
-            width: '10px',
+            width: '5px',
             height: '100%',
             cursor: 'ew-resize',
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
             borderTopLeftRadius: '3px',
-            borderBottomLeftRadius: '3px'
+            borderBottomLeftRadius: '3px',
+            zIndex: '3'
           });
 
         var $endHandle = $('<div>')
@@ -148,16 +199,35 @@
             position: 'absolute',
             right: '0',
             top: '0',
-            width: '10px',
+            width: '5px',
             height: '100%',
             cursor: 'ew-resize',
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
             borderTopRightRadius: '3px',
-            borderBottomRightRadius: '3px'
+            borderBottomRightRadius: '3px',
+            zIndex: '3'
           });
 
         $task.append($startHandle, $endHandle);
         $container.prepend($task);
+
+        var rowBgWidth = calculateWidth(firstDate, lastDate);
+        // 偶数行の背景色を薄くする
+        if (index % 2 === 1) {
+          var $rowBg = $('<div>')
+            .addClass('gantt-row-bg')
+            .css({
+              position: 'absolute',
+              top: (index * 24 + 60) + 'px',
+              left: '0px',
+              width: rowBgWidth + 'px',
+              //width: '100vh',
+              height: '24px',
+              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              zIndex: '1'
+            });
+          $container.prepend($rowBg);
+        }
       });
     }
 
@@ -167,7 +237,7 @@
         .addClass('gantt-ticket-list')
         .css({
           position: 'absolute',
-          paddingTop: '60px',
+          //paddingTop: '60px',
           left: '0',
           top: '0px',
           width: '200px',
@@ -176,22 +246,24 @@
           boxSizing: 'border-box',
           borderRight: '1px solid #ccc',
           zIndex: '999',
-          overflowY: 'auto'
+          //overflowY: 'auto'
         });
 
-      // リサイズハンドルを追加
-      var $resizeHandle = $('<div>')
-        .addClass('gantt-ticket-list-resize-handle')
+      var $ticketListHeader = $('<div>')
+        .addClass('gantt-ticket-list-header')
         .css({
-          position: 'absolute',
-          right: '0',
-          top: '0',
-          width: '5px',
-          height: '100%',
-          cursor: 'ew-resize',
-          backgroundColor: 'transparent',
-          zIndex: '1000'
+          position: 'sticky',
+          left: '0',
+          top: '0px',
+          width: '200px',
+          height: '60px',
+          backgroundColor: '#f5f5f5',
+          boxSizing: 'border-box',
+          borderRight: '1px solid #ccc',
+          borderBottom: '1px solid #ccc',
+          zIndex: '999',
         });
+      $ticketList.append($ticketListHeader);
 
       // チケットを親子関係でソート
       var sortedTasks = sortTasksByParent(settings.tasks);
@@ -203,12 +275,12 @@
           .addClass('gantt-ticket-item')
           .attr('data-task-id', task.id)
           .css({
-            padding: '5px 10px',
+            padding: '5px 5px',
             paddingLeft: (10 + indent) + 'px',
             boxSizing: 'border-box',
             borderBottom: '1px solid #ddd',
             fontSize: '10px',
-            lineHeight: '14px',
+            lineHeight: '13px', //暫定
             cursor: 'pointer',
             backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5',
             whiteSpace: 'nowrap',
@@ -219,14 +291,29 @@
 
         // クリックイベントを追加
         $ticket.on('click', function() {
-          window.open('/issues/' + task.id, 'open_ticket');
+          window.open('/issues/' + task.id, '_blank');
         });
 
         $ticketList.append($ticket);
       });
 
+      // リサイズハンドルを追加
+      var $resizeHandle = $('<div>')
+        .addClass('gantt-ticket-list-resize-handle')
+        .css({
+          position: 'absolute',
+          right: '0',
+          top: '0',
+          width: '5px',
+          height: (sortedTasks.length * 24 + 60) + 'px',
+          cursor: 'ew-resize',
+          backgroundColor: 'transparent',
+          overflow: 'visible',
+          zIndex: '1000'
+        });
+
       $ticketList.append($resizeHandle);
-      $container.prepend($ticketList);
+      $ganttEditor.prepend($ticketList);
 
       // リサイズハンドルのイベント
       var isResizing = false;
@@ -246,8 +333,9 @@
         var deltaX = e.clientX - startX;
         var newWidth = Math.max(100, Math.min(400, startWidth + deltaX)); // 最小100px、最大400px
 
+        $ticketListHeader.css('width', newWidth + 'px');
         $ticketList.css('width', newWidth + 'px');
-        $container.css('paddingLeft', newWidth + 'px');
+        $container.css('marginLeft', newWidth + 'px');
       });
 
       $(document).on('mouseup', function() {
@@ -256,7 +344,7 @@
 
       // ガントチャートの位置を調整
       $container.css({
-        paddingLeft: $ticketList.width() + 'px'
+        marginLeft: $ticketList.width() + 'px'
       });
     }
 
@@ -307,19 +395,60 @@
     function renderDateScale(firstDate, lastDate) {
       // 月の目盛り
       var $monthScale = $('<div>')
-        .addClass('gantt-scale-month');
+        .addClass('gantt-scale-month')
+        .css({
+          position: 'sticky',
+          top: '0px',
+          left: '0px',
+          right: '0px',
+          height: '20px',
+          backgroundColor: '#e0e0e0',
+          zIndex: '998',
+          boxSizing: 'border-box',
+          borderBottom: '1px solid #ccc'
+        });
 
       // 曜日の目盛り
       var $weekdayScale = $('<div>')
-        .addClass('gantt-scale-weekday');
+        .addClass('gantt-scale-weekday')
+        .css({
+          position: 'sticky',
+          top: '20px',
+          left: '0px',
+          right: '0px',
+          height: '20px',
+          backgroundColor: '#f0f0f0',
+          zIndex: '998',
+          boxSizing: 'border-box',
+          borderBottom: '1px solid #ccc'
+        });
 
       // 日の目盛り
       var $dayScale = $('<div>')
-        .addClass('gantt-scale-day');
+        .addClass('gantt-scale-day')
+        .css({
+          position: 'sticky',
+          top: '40px',
+          left: '0px',
+          right: '0px',
+          height: '20px',
+          backgroundColor: '#f5f5f5',
+          zIndex: '998',
+          boxSizing: 'border-box',
+          borderBottom: '1px solid #ccc'
+        });
 
       // 縦の罫線
       var $verticalLineScale = $('<div>')
-        .addClass('gantt-scale-vertical-line');
+        .addClass('gantt-scale-vertical-line')
+        .css({
+          position: 'absolute',
+          top: '60px',
+          left: '0px',
+          right: '0px',
+          height: 'calc(100% - 60px)',
+          //zIndex: '997'
+        });
 
       // 月の表示
       var currentDate = new Date(firstDate);
@@ -418,7 +547,7 @@
           .css({
             position: 'absolute',
             top: '0px',
-            height: '100%',
+            height: '100vh',
             left: calculateLeftPosition(currentDate, firstDate),
             width: pixelsPerDay + 'px',
             boxSizing: 'border-box',
@@ -457,16 +586,16 @@
 
     function getTaskColor(task) {
       // 進捗率が100%の場合はグレーで表示
-      if (task.done_ratio === 100) {
+//      if (task.done_ratio === 100) {
         return '#808080'; // グレー
-      }
+//      }
 
-      var colors = {
-        'Bug': '#ff0000',
-        'Feature': '#4CAF50',
-        'Support': '#2196F3'
-      };
-      return colors[task.tracker_name] || '#4CAF50';
+ //     var colors = {
+ //       'Bug': '#ff0000',
+ //       'Feature': '#4CAF50',
+ //       'Support': '#2196F3'
+ //     };
+ //     return colors[task.tracker_name] || '#4CAF50';
     }
 
     function bindEvents() {
@@ -502,7 +631,7 @@
         var task = settings.tasks.find(function(t) { return t.id === taskId; });
         if (task) {
           //window.location.href = '/issues/' + taskId;
-          window.open('/issues/' + taskId, 'open_ticket');
+          window.open('/issues/' + taskId, '_blank');
         }
       });
 
@@ -617,7 +746,7 @@
 
     function calculateLeftPosition(date, firstDate) {
       var days = Math.round((new Date(date) - new Date(firstDate)) / (1000 * 60 * 60 * 24));
-      return Math.max(0, days * pixelsPerDay) + 200;
+      return Math.max(0, days * pixelsPerDay);
     }
 
     function calculateWidth(startDate, dueDate) {
@@ -669,7 +798,7 @@
       if (dueDate) {
         originalTask.due_date = formatDate(dueDate);
       }
-      renderTasks();
+      //renderTasks();
 
       // サーバーに更新を送信
       $.ajax({

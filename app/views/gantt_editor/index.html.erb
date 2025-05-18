@@ -18,7 +18,7 @@
         var tasks = <%= raw @issues.to_json(
           only: [:id, :subject, :start_date, :due_date, :done_ratio, :parent_id],
           include: {  
-            status: { only: [:name] },
+            status: { only: [:name, :is_closed] },
             tracker: { only: [:name] }
           }
         ) %>;
@@ -34,8 +34,9 @@
               start_date: task.start_date,
               due_date: task.due_date,
               status_name: task.status ? task.status.name : '',
+              status_is_closed: task.status ? task.status.is_closed : false,
               tracker_name: task.tracker ? task.tracker.name : '',
-              done_ratio: task.done_ratio,
+              done_ratio: task.status ? task.status.is_closed ? 100 : task.done_ratio : 0,
               parent_id: task.parent_id
             };
           })
