@@ -100,6 +100,14 @@
       lastDate.setMonth(lastDate.getMonth() + 3);
       lastDate.setDate(-1);
 
+      // 現在日から15日前を起点として設定
+      var today = new Date();
+      var startDate = new Date(today);
+      startDate.setDate(today.getDate() - 15);
+      if (startDate < firstDate) {
+        firstDate = startDate;
+      }
+
       // チケット一覧を表示
       renderTicketList();
 
@@ -110,7 +118,8 @@
       var sortedTasks = sortTasksByParent(settings.tasks);
 
       // イナズマ線用のSVGコンテナを作成
-      var $svgContainer = $('<svg>')
+      var svgNS = "http://www.w3.org/2000/svg";
+      var $svgContainer = $(document.createElementNS(svgNS, "svg"))
         .attr('width', '100%')
         .attr('height', '100%')
         .css({
@@ -120,7 +129,7 @@
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
-          zIndex: '1',
+          zIndex: '5',
           overflow: 'visible'
         });
       $container.prepend($svgContainer);
@@ -244,7 +253,7 @@
             });
           $container.prepend($rowBg);
         }
-
+/*
         // 親子関係のイナズマ線を追加
         if (task.parent_id) {
           var parentTask = sortedTasks.find(function(t) { return t.id === task.parent_id; });
@@ -269,16 +278,67 @@
                        L ${childCenterX} ${childCenterY}`;
             
             // パスを追加
-            $('<path>')
-              .attr('d', path)
-              .attr('stroke', '#666')
-              .attr('stroke-width', '1')
-              .attr('fill', 'none')
-              .attr('stroke-dasharray', '4,4')
-              .appendTo($svgContainer);
+            var pathElement = document.createElementNS(svgNS, "path");
+            pathElement.setAttribute("d", path);
+            pathElement.setAttribute("stroke", "#666");
+            pathElement.setAttribute("stroke-width", "2");
+            pathElement.setAttribute("fill", "none");
+            //pathElement.setAttribute("stroke-dasharray", "4,4");
+            $svgContainer[0].appendChild(pathElement);
           }
         }
+*/
+
+        // 現在日から各チケットの進捗率を結ぶイナズマ線を追加
+        var today = new Date();
+        var todayX = calculateLeftPosition(today, firstDate);
+        var taskCenterX = calculateLeftPosition(task.start_date, firstDate) + 
+                         calculateWidth(task.start_date, task.due_date) / 2;
+        var taskCenterY = index * 24 + 60 + 3 + 8; // チケットの中心Y座標
+/*
+        // イナズマ線のパスを作成
+        var progressPath = `M ${todayX} ${60} 
+                          L ${todayX} ${taskCenterY} 
+                          L ${taskCenterX} ${taskCenterY}`;
+        
+        // パスを追加
+        var progressPathElement = document.createElementNS(svgNS, "path");
+        progressPathElement.setAttribute("d", progressPath);
+        progressPathElement.setAttribute("stroke", "#666");
+        progressPathElement.setAttribute("stroke-width", "2");
+        progressPathElement.setAttribute("fill", "none");
+        $svgContainer[0].appendChild(progressPathElement);
+*/
+        // チケット間のイナズマ線を追加
+        if (index > 0) {
+          var prevTask = sortedTasks[index - 1];
+          var prevTaskStartX = calculateLeftPosition(prevTask.start_date, firstDate);
+          var prevTaskWidth = calculateWidth(prevTask.start_date, prevTask.due_date) + 10;
+          var prevTaskProgressX = prevTaskStartX + (prevTaskWidth * (prevTask.done_ratio || 0) / 100);
+          var prevTaskCenterY = (index - 1) * 24 + 60 + 3 + 8; // 前のチケットの中心Y座標
+
+          var taskStartX = calculateLeftPosition(task.start_date, firstDate);
+          var taskWidth = calculateWidth(task.start_date, task.due_date) + 10;
+          var taskProgressX = taskStartX + (taskWidth * (task.done_ratio || 0) / 100);
+          var taskCenterY = index * 24 + 60 + 3 + 8; // 現在のチケットの中心Y座標
+
+          // イナズマ線のパスを作成（縦軸の中心を結ぶ）
+          var taskPath = `M ${prevTaskProgressX} ${prevTaskCenterY} 
+                        L ${taskProgressX} ${taskCenterY}`;
+          
+          // パスを追加
+          var taskPathElement = document.createElementNS(svgNS, "path");
+          taskPathElement.setAttribute("d", taskPath);
+          taskPathElement.setAttribute("stroke", "rgba(250, 0, 0, 0.7)");
+          taskPathElement.setAttribute("stroke-width", "2");
+          taskPathElement.setAttribute("fill", "none");
+          $svgContainer[0].appendChild(taskPathElement);
+        }
       });
+
+      // 現在日から15日前の位置にスクロール
+      var scrollLeft = calculateLeftPosition(startDate, firstDate);
+      $ganttEditor.scrollLeft(scrollLeft);
     }
 
     function renderTicketList() {
@@ -550,8 +610,10 @@
       currentDate = new Date(firstDate);
       while (currentDate <= lastDate) {
         var dayOfWeek = currentDate.getDay();
+        var isToday = currentDate.toDateString() === new Date().toDateString();
         var isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 日曜日, 6: 土曜日
         var isHoliday = isHolidayMethod(currentDate); // 祝日
+        var todayBgColor = 'rgba(255, 255, 0, 0.6)';
         var weekendBgColor = dayOfWeek === 0 ? 'rgba(250, 200, 200)' : 'rgba(215, 215, 250)'; // 日曜: 薄い赤, 土曜: 薄い青
         var holidayBgColor = 'rgba(250, 200, 200)'; // 祝日: 薄い赤
 
@@ -569,7 +631,7 @@
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
-            backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f0f0f0',
+            backgroundColor: isToday ? todayBgColor : isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f0f0f0',
             fontSize: Math.max(10, 10 * zoomLevel) + 'px',
             color: getWeekdayColor(dayOfWeek)
           });
@@ -590,7 +652,7 @@
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
             borderBottom: '1px solid #ccc',
-            backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f5f5f5',
+            backgroundColor: isToday ? todayBgColor : isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f5f5f5',
             fontSize: Math.max(10, 10 * zoomLevel) + 'px',
             color: '#666'
           });
@@ -607,7 +669,7 @@
             width: pixelsPerDay + 'px',
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
-            backgroundColor: isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#ffffff',
+            backgroundColor: isToday ? todayBgColor : isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#ffffff',
           });
         $verticalLineScale.append($verticalLine);
 
