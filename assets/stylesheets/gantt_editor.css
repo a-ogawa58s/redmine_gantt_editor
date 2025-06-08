@@ -17,7 +17,7 @@
   left: 0px;
   right: 0px;
   height: 20px;
-  z-index: 999;
+  z-index: 9;
 }
 
 .gantt-scale-weekday {
@@ -26,7 +26,7 @@
   left: 0px;
   right: 0px;
   height: 20px;
-  z-index: 999;
+  z-index: 9;
 }
 
 .gantt-scale-day {
@@ -35,7 +35,7 @@
   left: 0px;
   right: 0px;
   height: 20px;
-  z-index: 999;
+  z-index: 9;
 }
 
 .gantt-scale-vertical-line {

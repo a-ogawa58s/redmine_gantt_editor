@@ -109,6 +109,22 @@
       // チケットを親子関係でソート
       var sortedTasks = sortTasksByParent(settings.tasks);
 
+      // イナズマ線用のSVGコンテナを作成
+      var $svgContainer = $('<svg>')
+        .attr('width', '100%')
+        .attr('height', '100%')
+        .css({
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: '1',
+          overflow: 'visible'
+        });
+      $container.prepend($svgContainer);
+
       // タスクを表示
       sortedTasks.forEach(function(task, index) {
         console.log('タスクを表示:', task);
@@ -172,7 +188,8 @@
             zIndex: '2',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
+            textDecoration: (task.status_name === '完了' || task.done_ratio === 100) ? 'line-through' : 'none'
           });
 
         $task.append($progress, $subject);
@@ -211,7 +228,7 @@
         $task.append($startHandle, $endHandle);
         $container.prepend($task);
 
-        var rowBgWidth = calculateWidth(firstDate, lastDate);
+        var rowBgWidth = calculateWidth(firstDate, lastDate) + 10;
         // 偶数行の背景色を薄くする
         if (index % 2 === 1) {
           var $rowBg = $('<div>')
@@ -221,12 +238,45 @@
               top: (index * 24 + 60) + 'px',
               left: '0px',
               width: rowBgWidth + 'px',
-              //width: '100vh',
               height: '24px',
               backgroundColor: 'rgba(0, 0, 0, 0.05)',
               zIndex: '1'
             });
           $container.prepend($rowBg);
+        }
+
+        // 親子関係のイナズマ線を追加
+        if (task.parent_id) {
+          var parentTask = sortedTasks.find(function(t) { return t.id === task.parent_id; });
+          if (parentTask) {
+            var parentIndex = sortedTasks.indexOf(parentTask);
+            var childIndex = index;
+            
+            // 親チケットの中心位置を計算
+            var parentCenterX = calculateLeftPosition(parentTask.start_date, firstDate) + 
+                              calculateWidth(parentTask.start_date, parentTask.due_date) / 2;
+            var parentCenterY = parentIndex * 24 + 60 + 3 + 8; // 親チケットの中心Y座標
+            
+            // 子チケットの中心位置を計算
+            var childCenterX = calculateLeftPosition(task.start_date, firstDate) + 
+                             calculateWidth(task.start_date, task.due_date) / 2;
+            var childCenterY = childIndex * 24 + 60 + 3 + 8; // 子チケットの中心Y座標
+            
+            // イナズマ線のパスを作成
+            var path = `M ${parentCenterX} ${parentCenterY} 
+                       L ${parentCenterX} ${(parentCenterY + childCenterY) / 2} 
+                       L ${childCenterX} ${(parentCenterY + childCenterY) / 2} 
+                       L ${childCenterX} ${childCenterY}`;
+            
+            // パスを追加
+            $('<path>')
+              .attr('d', path)
+              .attr('stroke', '#666')
+              .attr('stroke-width', '1')
+              .attr('fill', 'none')
+              .attr('stroke-dasharray', '4,4')
+              .appendTo($svgContainer);
+          }
         }
       });
     }
@@ -236,16 +286,16 @@
       var $ticketList = $('<div>')
         .addClass('gantt-ticket-list')
         .css({
-          position: 'absolute',
+          position: 'sticky',
           //paddingTop: '60px',
           left: '0',
           top: '0px',
-          width: '200px',
-          height: '100%',
+          width: '400px',
+          height: 'calc(100vh + 60px)',
           backgroundColor: '#f5f5f5',
           boxSizing: 'border-box',
           borderRight: '1px solid #ccc',
-          zIndex: '999',
+          zIndex: '9',
           //overflowY: 'auto'
         });
 
@@ -255,13 +305,13 @@
           position: 'sticky',
           left: '0',
           top: '0px',
-          width: '200px',
+          width: '400px',
           height: '60px',
           backgroundColor: '#f5f5f5',
           boxSizing: 'border-box',
           borderRight: '1px solid #ccc',
           borderBottom: '1px solid #ccc',
-          zIndex: '999',
+          zIndex: '9',
         });
       $ticketList.append($ticketListHeader);
 
@@ -285,7 +335,8 @@
             backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
+            textDecoration: (task.status_name === '完了' || task.done_ratio === 100) ? 'line-through' : 'none'
           })
           .html(task.subject);
 
@@ -305,11 +356,12 @@
           right: '0',
           top: '0',
           width: '5px',
-          height: (sortedTasks.length * 24 + 60) + 'px',
+          height: 'calc(100vh + 60px)',
+          //height: (sortedTasks.length * 24 + 60) + 'px',
           cursor: 'ew-resize',
           backgroundColor: 'transparent',
           overflow: 'visible',
-          zIndex: '1000'
+          zIndex: '10'
         });
 
       $ticketList.append($resizeHandle);
@@ -331,7 +383,7 @@
         if (!isResizing) return;
 
         var deltaX = e.clientX - startX;
-        var newWidth = Math.max(100, Math.min(400, startWidth + deltaX)); // 最小100px、最大400px
+        var newWidth = Math.max(100, Math.min(1000, startWidth + deltaX)); // 最小100px、最大1000px
 
         $ticketListHeader.css('width', newWidth + 'px');
         $ticketList.css('width', newWidth + 'px');
@@ -403,7 +455,7 @@
           right: '0px',
           height: '20px',
           backgroundColor: '#e0e0e0',
-          zIndex: '998',
+          zIndex: '8',
           boxSizing: 'border-box',
           borderBottom: '1px solid #ccc'
         });
@@ -418,7 +470,7 @@
           right: '0px',
           height: '20px',
           backgroundColor: '#f0f0f0',
-          zIndex: '998',
+          zIndex: '8',
           boxSizing: 'border-box',
           borderBottom: '1px solid #ccc'
         });
@@ -433,7 +485,7 @@
           right: '0px',
           height: '20px',
           backgroundColor: '#f5f5f5',
-          zIndex: '998',
+          zIndex: '8',
           boxSizing: 'border-box',
           borderBottom: '1px solid #ccc'
         });
@@ -490,6 +542,9 @@
         
         currentDate.setMonth(currentDate.getMonth() + 1);
       }
+
+      // 1日たりないので、1日追加
+      lastDate.setDate(lastDate.getDate() + 1);
 
       // 曜日と日の表示
       currentDate = new Date(firstDate);
