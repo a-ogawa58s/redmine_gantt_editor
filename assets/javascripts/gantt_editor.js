@@ -9,14 +9,18 @@
     var $container = null; // 描画箇所の本体
     var draggedTask = null;
     var dragOffset = 0;
-    var zoomLevel = 0.5; // デフォルトのズームレベル
-    var pixelsPerDay = 20;//25; // デフォルトの1日あたりのピクセル数（50 * 0.5）
     var dragMode = null; // 'move', 'start', 'end'
+    var zoomLevel = 0.5; // デフォルトのズームレベル
+
+    var pixelsPerDayWith = 20; // 1日あたりの横幅ピクセル数（左ハンドル:5px、本体:10px、右ハンドル:5px）
+    var pixelsScaleHeight = 16; // 目盛りの高さピクセル数
+    var pixelsScaleTotalHeight = (pixelsScaleHeight * 3); // 目盛りの高さピクセル数（年月/曜日/日）
+    var pixelsTaskHeight = 16; // タスクの高さピクセル数（上下パディング:2px込み）
+    var pixelsRadius = '0px'
 
     function init() {
       console.log('Initializing gantt editor with tasks:', settings.tasks);
       //renderZoomControls();
-
       $container = $('<div>')
         .addClass('gantt-ticket-container')
         .css({
@@ -28,11 +32,38 @@
           marginLeft: '300px'
         });
       $ganttEditor.prepend($container);
-    
+
       renderTasks();
       bindEvents();
     }
 
+    function renew() {
+      var scrollLeft = $ganttEditor.scrollLeft;
+
+      $ganttEditor.find('.gantt-ticket-list').remove();
+      $container.remove();
+      $container.off();
+      
+      draggedTask = null;
+      dragMode = null;
+
+      $container = $('<div>')
+        .addClass('gantt-ticket-container')
+        .css({
+          position: 'absolute',
+          top: '0px',
+          left: '0px',
+          height: '100%',
+          width: '100%',
+          marginLeft: '300px'
+        });
+        $ganttEditor.prepend($container);
+
+      renderTasks();
+      bindEvents();
+      $ganttEditor.scrollLeft(scrollLeft);
+    }
+/*
     function renderZoomControls() {
       var $zoomControls = $('<div>')
         .addClass('gantt-zoom-controls');
@@ -60,7 +91,7 @@
       $zoomOut.on('click', function() {
         if (zoomLevel >= 0.5) {
           zoomLevel -= 0.25;
-          pixelsPerDay = 40 * zoomLevel;
+          pixelsPerDayWith = 40 * zoomLevel;
           $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
           renderTasks();
         }
@@ -69,7 +100,7 @@
       $zoomIn.on('click', function() {
         if (zoomLevel <= 0.75) {
           zoomLevel += 0.25;
-          pixelsPerDay = 40 * zoomLevel;
+          pixelsPerDayWith = 40 * zoomLevel;
           $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
           renderTasks();
         }
@@ -77,12 +108,12 @@
 
       $zoomReset.on('click', function() {
         zoomLevel = 0.5; // リセット時のズームレベル
-        pixelsPerDay = 20; // リセット時のピクセル数も調整
+        pixelsPerDayWith = 20; // リセット時のピクセル数も調整
         $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task, .gantt-vertical-line').remove();
         renderTasks();
       });
     }
-
+*/
     function renderTasks() {
       if (!settings.tasks || settings.tasks.length === 0) {
         console.log('No tasks to render');
@@ -148,21 +179,22 @@
                         '進捗率: ' + (task.done_ratio || 0) + '%')
           .css({
             position: 'absolute',
-            top: (index * 24 + 60 + 3) + 'px', // 1行:24px, 目盛り:60px, タスク余白:3px
+            top: (index * pixelsTaskHeight + pixelsScaleTotalHeight) + 'px', // 1行:24px, 目盛り:60px, タスク余白:3px
             left: calculateLeftPosition(task.start_date, firstDate),
             width: calculateWidth(task.start_date, task.due_date),
-            height: '16px',
-            backgroundColor: getTaskColor(task),
+            height: (pixelsTaskHeight - 2 - 2) + 'px',
+            backgroundColor: 'rgb(150, 150, 150)', //128,128,128
             color: 'white',
             padding: '1px 5px',
-            borderRadius: '3px',
+            borderRadius: pixelsRadius,
             cursor: 'move',
             userSelect: 'none',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            transition: 'box-shadow 0.3s ease',
-            fontSize: '10px',
-            lineHeight: '14px',
-            overflow: 'hidden'
+            //boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            //transition: 'box-shadow 0.3s ease',
+            fontSize: '0.8em',
+            lineHeight: (pixelsTaskHeight - 2 - 2) + 'px',
+            overflow: 'hidden',
+            zIndex: '2'
           });
 
         // 進捗率に応じた背景色のグラデーション
@@ -176,10 +208,10 @@
             height: '100%',
             width: doneRatio + '%',
             backgroundColor: '#4CAF50',
-            borderTopLeftRadius: '3px',
-            borderBottomLeftRadius: '3px',
-            borderTopRightRadius: doneRatio === 100 ? '3px' : '0px',
-            borderBottomRightRadius: doneRatio === 100 ? '3px' : '0px'
+            borderTopLeftRadius: pixelsRadius,
+            borderBottomLeftRadius: pixelsRadius,
+            borderTopRightRadius: doneRatio === 100 ? pixelsRadius : '0px',
+            borderBottomRightRadius: doneRatio === 100 ? pixelsRadius : '0px'
           });
 
         // チケットの題名
@@ -192,7 +224,7 @@
             left: '0',
             width: '100%',
             height: '100%',
-            padding: '1px 5px',
+            padding: '0px 5px',
             boxSizing: 'border-box',
             zIndex: '2',
             whiteSpace: 'nowrap',
@@ -214,8 +246,8 @@
             height: '100%',
             cursor: 'ew-resize',
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            borderTopLeftRadius: '3px',
-            borderBottomLeftRadius: '3px',
+            borderTopLeftRadius: pixelsRadius,
+            borderBottomLeftRadius: pixelsRadius,
             zIndex: '3'
           });
 
@@ -229,8 +261,8 @@
             height: '100%',
             cursor: 'ew-resize',
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            borderTopRightRadius: '3px',
-            borderBottomRightRadius: '3px',
+            borderTopRightRadius: pixelsRadius,
+            borderBottomRightRadius: pixelsRadius,
             zIndex: '3'
           });
 
@@ -244,10 +276,10 @@
             .addClass('gantt-row-bg')
             .css({
               position: 'absolute',
-              top: (index * 24 + 60) + 'px',
+              top: (index * pixelsTaskHeight + pixelsScaleTotalHeight) + 'px',
               left: '0px',
               width: rowBgWidth + 'px',
-              height: '24px',
+              height: pixelsTaskHeight + 'px',
               backgroundColor: 'rgba(0, 0, 0, 0.05)',
               zIndex: '1'
             });
@@ -294,7 +326,7 @@
         var todayX = calculateLeftPosition(today, firstDate);
         var taskCenterX = calculateLeftPosition(task.start_date, firstDate) + 
                          calculateWidth(task.start_date, task.due_date) / 2;
-        var taskCenterY = index * 24 + 60 + 3 + 8; // チケットの中心Y座標
+        var taskCenterY = index * pixelsTaskHeight + pixelsScaleTotalHeight + 3 + 4; // チケットの中心Y座標
 /*
         // イナズマ線のパスを作成
         var progressPath = `M ${todayX} ${60} 
@@ -315,12 +347,12 @@
           var prevTaskStartX = calculateLeftPosition(prevTask.start_date, firstDate);
           var prevTaskWidth = calculateWidth(prevTask.start_date, prevTask.due_date) + 10;
           var prevTaskProgressX = prevTaskStartX + (prevTaskWidth * (prevTask.done_ratio || 0) / 100);
-          var prevTaskCenterY = (index - 1) * 24 + 60 + 3 + 8; // 前のチケットの中心Y座標
+          var prevTaskCenterY = (index - 1) * pixelsTaskHeight + pixelsScaleTotalHeight + 3 + 4; // 前のチケットの中心Y座標
 
           var taskStartX = calculateLeftPosition(task.start_date, firstDate);
           var taskWidth = calculateWidth(task.start_date, task.due_date) + 10;
           var taskProgressX = taskStartX + (taskWidth * (task.done_ratio || 0) / 100);
-          var taskCenterY = index * 24 + 60 + 3 + 8; // 現在のチケットの中心Y座標
+          var taskCenterY = index * pixelsTaskHeight + pixelsScaleTotalHeight + 3 + 4; // 現在のチケットの中心Y座標
 
           // イナズマ線のパスを作成（縦軸の中心を結ぶ）
           var taskPath = `M ${prevTaskProgressX} ${prevTaskCenterY} 
@@ -351,7 +383,7 @@
           left: '0',
           top: '0px',
           width: '400px',
-          height: 'calc(100vh + 60px)',
+          height: 'calc(100vh + ' + pixelsScaleTotalHeight + 'px)',
           backgroundColor: '#f5f5f5',
           boxSizing: 'border-box',
           borderRight: '1px solid #ccc',
@@ -366,7 +398,7 @@
           left: '0',
           top: '0px',
           width: '400px',
-          height: '60px',
+          height: pixelsScaleTotalHeight + 'px',
           backgroundColor: '#f5f5f5',
           boxSizing: 'border-box',
           borderRight: '1px solid #ccc',
@@ -385,12 +417,13 @@
           .addClass('gantt-ticket-item')
           .attr('data-task-id', task.id)
           .css({
-            padding: '5px 5px',
+            padding: '0px 5px',
             paddingLeft: (10 + indent) + 'px',
             boxSizing: 'border-box',
             borderBottom: '1px solid #ddd',
             fontSize: '10px',
-            lineHeight: '13px', //暫定
+            height: pixelsTaskHeight + 'px',
+            lineHeight: pixelsTaskHeight + 'px',
             cursor: 'pointer',
             backgroundColor: task.parent_id ? '#fafafa' : '#f5f5f5',
             whiteSpace: 'nowrap',
@@ -416,7 +449,7 @@
           right: '0',
           top: '0',
           width: '5px',
-          height: 'calc(100vh + 60px)',
+          height: 'calc(100vh + ' + pixelsScaleTotalHeight + 'px)',
           //height: (sortedTasks.length * 24 + 60) + 'px',
           cursor: 'ew-resize',
           backgroundColor: 'transparent',
@@ -504,89 +537,92 @@
       });
     }
 
+    // 日付スケールの描画
     function renderDateScale(firstDate, lastDate) {
-      // 月の目盛り
-      var $monthScale = $('<div>')
-        .addClass('gantt-scale-month')
-        .css({
-          position: 'sticky',
-          top: '0px',
-          left: '0px',
-          right: '0px',
-          height: '20px',
+      // スケールの基本設定
+      var scaleConfig = {
+        month: {
+          height: pixelsScaleHeight + 'px',
           backgroundColor: '#e0e0e0',
-          zIndex: '8',
-          boxSizing: 'border-box',
-          borderBottom: '1px solid #ccc'
-        });
-
-      // 曜日の目盛り
-      var $weekdayScale = $('<div>')
-        .addClass('gantt-scale-weekday')
-        .css({
-          position: 'sticky',
-          top: '20px',
-          left: '0px',
-          right: '0px',
-          height: '20px',
+          zIndex: '8'
+        },
+        weekday: {
+          height: pixelsScaleHeight + 'px',
           backgroundColor: '#f0f0f0',
-          zIndex: '8',
-          boxSizing: 'border-box',
-          borderBottom: '1px solid #ccc'
-        });
+          zIndex: '8'
+        },
+        day: {
+          height: pixelsScaleHeight + 'px',
+          backgroundColor: '#f5f5f5',
+          zIndex: '8'
+        }
+      };
 
-      // 日の目盛り
-      var $dayScale = $('<div>')
-        .addClass('gantt-scale-day')
+      // スケールコンテナの作成
+      var $monthScale = createScaleContainer('gantt-scale-month', scaleConfig.month, 0);
+      var $weekdayScale = createScaleContainer('gantt-scale-weekday', scaleConfig.weekday, pixelsScaleHeight);
+      var $dayScale = createScaleContainer('gantt-scale-day', scaleConfig.day, pixelsScaleHeight * 2);
+      var $verticalLineScale = createVerticalLineContainer();
+
+      // 月の表示
+      renderMonthScale($monthScale, firstDate, lastDate);
+
+      // 曜日と日の表示
+      renderDayScale($weekdayScale, $dayScale, $verticalLineScale, firstDate, lastDate);
+
+      // コンテナに追加
+      $container.prepend($monthScale, $weekdayScale, $dayScale, $verticalLineScale);
+    }
+
+    // スケールコンテナの作成
+    function createScaleContainer(className, config, top) {
+      return $('<div>')
+        .addClass(className)
         .css({
           position: 'sticky',
-          top: '40px',
+          top: top + 'px',
           left: '0px',
           right: '0px',
-          height: '20px',
-          backgroundColor: '#f5f5f5',
-          zIndex: '8',
+          height: config.height,
+          backgroundColor: config.backgroundColor,
+          zIndex: config.zIndex,
           boxSizing: 'border-box',
           borderBottom: '1px solid #ccc'
         });
+    }
 
-      // 縦の罫線
-      var $verticalLineScale = $('<div>')
+    // 縦線コンテナの作成
+    function createVerticalLineContainer() {
+      return $('<div>')
         .addClass('gantt-scale-vertical-line')
         .css({
           position: 'absolute',
-          top: '60px',
+          top: pixelsScaleTotalHeight + 'px',
           left: '0px',
           right: '0px',
-          height: 'calc(100% - 60px)',
-          //zIndex: '997'
+          height: 'calc(100% - ' + pixelsScaleTotalHeight + 'px)'
         });
+    }
 
-      // 月の表示
+    // 月スケールの描画
+    function renderMonthScale($container, firstDate, lastDate) {
       var currentDate = new Date(firstDate);
-      currentDate.setDate(1); // 月の初日に設定
-      
+      currentDate.setDate(1);
+
       while (currentDate <= lastDate) {
         var monthStart = new Date(currentDate);
-        var monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0); // 月の最終日に設定
-        
-        // 月の開始位置を計算（月初日の0時0分0秒）
-        var monthLeft = calculateLeftPosition(monthStart, firstDate);
-        
-        // 次の月の開始位置を計算
         var nextMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        var monthLeft = calculateLeftPosition(monthStart, firstDate);
         var nextMonthLeft = calculateLeftPosition(nextMonthStart, firstDate);
-        
-        // 月の幅を計算（次の月の開始位置 - 現在の月の開始位置）
         var monthWidth = nextMonthLeft - monthLeft;
-        
+
         var $monthLabel = $('<div>')
           .addClass('gantt-scale-month-label')
           .text(formatMonthYear(currentDate.getMonth(), currentDate.getFullYear()))
           .css({
             position: 'absolute',
             top: '0px',
-            height: '20px',
+            height: pixelsScaleHeight + 'px',
             left: monthLeft + 'px',
             width: monthWidth + 'px',
             textAlign: 'center',
@@ -596,69 +632,56 @@
             backgroundColor: '#e0e0e0',
             fontSize: Math.max(10, 10 * zoomLevel) + 'px',
             fontWeight: 'bold',
-            color: '#333',
+            color: '#333'
           });
-        $monthScale.append($monthLabel);
-        
+        $container.append($monthLabel);
+
         currentDate.setMonth(currentDate.getMonth() + 1);
       }
+    }
 
-      // 1日たりないので、1日追加
-      lastDate.setDate(lastDate.getDate() + 1);
+    // 日スケールの描画
+    function renderDayScale($weekdayScale, $dayScale, $verticalLineScale, firstDate, lastDate) {
+      var currentDate = new Date(firstDate);
+      var todayBgColor = 'rgba(255, 255, 0, 0.6)';
 
-      // 曜日と日の表示
-      currentDate = new Date(firstDate);
       while (currentDate <= lastDate) {
         var dayOfWeek = currentDate.getDay();
         var isToday = currentDate.toDateString() === new Date().toDateString();
-        var isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0: 日曜日, 6: 土曜日
-        var isHoliday = isHolidayMethod(currentDate); // 祝日
-        var todayBgColor = 'rgba(255, 255, 0, 0.6)';
-        var weekendBgColor = dayOfWeek === 0 ? 'rgba(250, 200, 200)' : 'rgba(215, 215, 250)'; // 日曜: 薄い赤, 土曜: 薄い青
-        var holidayBgColor = 'rgba(250, 200, 200)'; // 祝日: 薄い赤
+        var isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        var isHoliday = isHolidayMethod(currentDate);
+        var weekendBgColor = dayOfWeek === 0 ? 'rgba(250, 200, 200)' : 'rgba(215, 215, 250)';
+        var holidayBgColor = 'rgba(250, 200, 200)';
+
+        // 背景色の決定
+        var bgColor = isToday ? todayBgColor :
+                     isHoliday ? holidayBgColor :
+                     isWeekend ? weekendBgColor :
+                     '#f5f5f5';
 
         // 曜日の表示
-        var $weekday = $('<div>')
-          .addClass('gantt-scale-weekday-label')
-          .text(formatWeekday(dayOfWeek))
-          .css({
-            position: 'absolute',
-            top: '0px',
-            height: '20px',
-            left: calculateLeftPosition(currentDate, firstDate),
-            width: pixelsPerDay + 'px',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-            borderRight: '1px solid #ccc',
-            borderBottom: '1px solid #ccc',
-            backgroundColor: isToday ? todayBgColor : isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f0f0f0',
-            fontSize: Math.max(10, 10 * zoomLevel) + 'px',
-            color: getWeekdayColor(dayOfWeek)
-          });
+        var $weekday = createDayElement(
+          'gantt-scale-weekday-label',
+          formatWeekday(dayOfWeek),
+          currentDate,
+          firstDate,
+          bgColor,
+          getWeekdayColor(dayOfWeek)
+        );
         $weekdayScale.append($weekday);
 
         // 日の表示
-        var $day = $('<div>')
-          .addClass('gantt-scale-day-label')
-          .text(currentDate.getDate())
-          .css({
-            position: 'absolute',
-            top: '0px',
-            height: '20px',
-            left: calculateLeftPosition(currentDate, firstDate),
-            width: pixelsPerDay + 'px',
-            textAlign: 'center',
-            paddingTop: '3px',
-            boxSizing: 'border-box',
-            borderRight: '1px solid #ccc',
-            borderBottom: '1px solid #ccc',
-            backgroundColor: isToday ? todayBgColor : isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#f5f5f5',
-            fontSize: Math.max(10, 10 * zoomLevel) + 'px',
-            color: '#666'
-          });
+        var $day = createDayElement(
+          'gantt-scale-day-label',
+          currentDate.getDate(),
+          currentDate,
+          firstDate,
+          bgColor,
+          '#666'
+        );
         $dayScale.append($day);
 
-        // 縦の罫線を追加
+        // 縦線の表示
         var $verticalLine = $('<div>')
           .addClass('gantt-vertical-line')
           .css({
@@ -666,20 +689,37 @@
             top: '0px',
             height: '100vh',
             left: calculateLeftPosition(currentDate, firstDate),
-            width: pixelsPerDay + 'px',
+            width: pixelsPerDayWith + 'px',
             boxSizing: 'border-box',
             borderRight: '1px solid #ccc',
-            backgroundColor: isToday ? todayBgColor : isHoliday ? holidayBgColor : isWeekend ? weekendBgColor : '#ffffff',
+            backgroundColor: bgColor
           });
         $verticalLineScale.append($verticalLine);
 
         currentDate.setDate(currentDate.getDate() + 1);
       }
+    }
 
-      $container.prepend($dayScale);
-      $container.prepend($weekdayScale);
-      $container.prepend($monthScale);
-      $container.prepend($verticalLineScale);
+    // 日要素の作成
+    function createDayElement(className, text, date, firstDate, bgColor, textColor) {
+      return $('<div>')
+        .addClass(className)
+        .text(text)
+        .css({
+          position: 'absolute',
+          top: '0px',
+          height: pixelsScaleHeight + 'px',
+          left: calculateLeftPosition(date, firstDate),
+          width: pixelsPerDayWith + 'px',
+          textAlign: 'center',
+          paddingTop: '2px', // 補正
+          boxSizing: 'border-box',
+          borderRight: '1px solid #ccc',
+          borderBottom: '1px solid #ccc',
+          backgroundColor: bgColor,
+          fontSize: Math.max(10, 10 * zoomLevel) + 'px',
+          color: textColor
+        });
     }
 
     function formatMonthYear(month, year) {
@@ -782,7 +822,7 @@
 
         // ドラッグ開始位置からの相対的な移動量を計算
         var deltaX = e.clientX - initialX;
-        var daysToAdd = Math.round(deltaX / pixelsPerDay);
+        var daysToAdd = Math.round(deltaX / pixelsPerDayWith);
         
         if (dragMode === 'move') {
           var newStartDate = new Date(initialStartDate);
@@ -793,10 +833,7 @@
           updateTaskDates(draggedTask.id, newStartDate, newDueDate);
         }
 
-        $container.find('.gantt-scale-month, .gantt-scale-weekday, .gantt-scale-day, .gantt-task').remove();
-        renderTasks();
-        draggedTask = null;
-        dragMode = null;
+        renew();
       });
 
       // リサイズの処理
@@ -806,7 +843,7 @@
 
         // ドラッグ開始位置からの相対的な移動量を計算
         var deltaX = e.clientX - initialX;
-        var daysToAdd = Math.round(deltaX / pixelsPerDay);
+        var daysToAdd = Math.round(deltaX / pixelsPerDayWith);
         
         if (dragMode === 'start') {
           var newStartDate = new Date(initialStartDate);
@@ -863,13 +900,13 @@
 
     function calculateLeftPosition(date, firstDate) {
       var days = Math.round((new Date(date) - new Date(firstDate)) / (1000 * 60 * 60 * 24));
-      return Math.max(0, days * pixelsPerDay);
+      return Math.max(0, days * pixelsPerDayWith);
     }
 
     function calculateWidth(startDate, dueDate) {
       dueDate = dueDate === null ? startDate : dueDate;
       var days = Math.round((new Date(dueDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
-      return Math.max(0, (days + 1) * pixelsPerDay - 10); // 右ハンドルの位置を調整
+      return Math.max(0, (days + 1) * pixelsPerDayWith - 10); // 右ハンドルの位置を調整
     }
 
     function updateTaskDates(taskId, startDate, dueDate) {
@@ -929,6 +966,7 @@
           console.log('Server response:', response);
           if (response.success) {
             console.log('日付の更新に成功しました');
+            //renew();
           } else {
             // エラー時は元の状態に戻す
             originalTask.start_date = originalStartDate;

@@ -1,5 +1,5 @@
 class GanttEditorController < ApplicationController
-  unloadable
+  #unloadable
 
   before_action :find_project
   before_action :authorize

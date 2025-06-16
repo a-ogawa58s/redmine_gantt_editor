@@ -10,7 +10,7 @@
   overflow: auto;
   background: #f9f9f9;
 }
-
+/*
 .gantt-scale-month {
   position: absolute;
   top: 0px;
@@ -45,7 +45,8 @@
   right: 0px;
   height: 100%;
 }
-
+*/
+/*
 .gantt-task {
   position: absolute;
   height: 30px;
@@ -61,7 +62,8 @@
   white-space: nowrap;
   z-index: 2;
 }
-
+*/
+/*
 .gantt-task-handle {
   position: absolute;
   top: 0;
@@ -101,6 +103,8 @@
 .gantt-task.dragging .gantt-task-handle {
   background-color: rgba(255, 255, 255, 0.4);
 }
+*/
+
 /*
 .task-subject {
   font-size: 12px;
